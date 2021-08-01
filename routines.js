@@ -6,10 +6,10 @@ async function updateMachines() {
     "https://c840cfx2we.execute-api.us-east-1.amazonaws.com/dev/isw/printer-report"
   );
   const machinesJSON = machineAPI.data.Items;
-  var addedMachines = await axios.get(
+  let addedMachines = await axios.get(
     "http://localhost:8080/resources/listarMaquinas"
   );
-  var addedMachines = addedMachines.data;
+  addedMachines = addedMachines.data;
   for (let i = 0; i < machinesJSON.length; i++) {
     const machineInfo = machinesJSON[i];
     const machineName = machineInfo.printer_name;
@@ -24,6 +24,7 @@ async function updateMachines() {
       });
       addedMachines[machineTypeName] = new Array();
     }
+    // Revisar si la maquina ya está en la base de datos
     if (
       Object.values(addedMachines[machineTypeName]).indexOf(machineName) == -1
     ) {

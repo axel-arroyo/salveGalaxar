@@ -16,22 +16,21 @@ router.get("/listarMaquinas", async (req, resp) => {
     const machines = await Machine.findAll({
       include: Type_Machine,
     });
-    var machineList = {};
+    const typeMachines = await Type_Machine.findAll();
+    let machineList = {};
+    // Agregar a machineList los tipos de maquina, inicialmente sin máquinas
+    for (let i = 0; i < typeMachines.length; i++) {
+      const typeMachine = typeMachines[i];
+      const typeMachineName = typeMachine.name;
+      machineList[typeMachineName] = new Object();
+    }
+    // Agregar las maquinas a machineList
     for (let i = 0; i < machines.length; i++) {
       const machine = machines[i];
-      machineName = machine.name;
-      typeMachineName = machine.Type_Machine.name;
-      if (Object.keys(machineList).indexOf(typeMachineName) == -1) {
-        machineList[typeMachineName] = new Array();
-      }
-      if (
-        Object.values(machineList[typeMachineName]).indexOf(machineName) == -1
-      ) {
-        machineList[typeMachineName] = [
-          ...machineList[typeMachineName],
-          machineName,
-        ];
-      }
+      const machineName = machine.name;
+      const machineId = machine.id;
+      const typeMachineName = machine.Type_Machine.name;
+      machineList[typeMachineName][machineId] = machineName;
     }
     resp.send(machineList);
   } catch (error) {
@@ -42,7 +41,13 @@ router.get("/listarMaquinas", async (req, resp) => {
 router.get("/listarRecursos", async (req, resp) => {
   try {
     const resources = await Resource.findAll();
-    const resourceList = resources.map((rec) => rec.link);
+    let resourceList = {};
+    for (let i = 0; i < resources.length; i++) {
+      const resource = resources[i];
+      const resourceId = resource.id;
+      const resourceLink = resource.link;
+      resourceList[resourceId] = resourceLink;
+    }
     resp.send(resourceList);
   } catch (error) {
     resp.status(400).send(error);
@@ -59,14 +64,14 @@ router.get("/listarHabilitacion", async (req, resp) => {
         },
       ],
     });
-    var habilitacionesPorMaquina = {};
+    let habilitacionesPorMaquina = {};
     for (let i = 0; i < habilitaciones.length; i++) {
       // Cada elemento son los tipos de maquina con una lista de los habilitados para cada una de ellas
       const element = habilitaciones[i];
       const typeMachineName = element.name;
       // (element -> Capacitacions -> Maker -> email) corresponde al correo del usuario habilitado.
       // Se obtiene el correo del maker para cada habilitación, por lo que el map obtiene todos los usuarios.
-      var habilitadosdeMaquina = {};
+      let habilitadosdeMaquina = {};
       for (let i = 0; i < element.Capacitacions.length; i++) {
         const habilitacion = element.Capacitacions[i];
         const id_hab = habilitacion.id;
@@ -121,17 +126,17 @@ router.get("/listarHabilitacionPorTipoMaquina", async (req, resp) => {
 router.post("/anadirHabilitacion", async (req, resp) => {
   try {
     // Se asume que los usuarios son válidos
-    var maker = await Maker.findOne({
+    let maker = await Maker.findOne({
       where: {
         email: req.body.email_maker,
       },
     });
-    var ayudante = await Ayudante.findOne({
+    let ayudante = await Ayudante.findOne({
       where: {
         email: req.body.email_ayudante,
       },
     });
-    var resource = await Resource.findOne({
+    let resource = await Resource.findOne({
       where: {
         link: req.body.recurso,
       },
@@ -157,7 +162,7 @@ router.post("/anadirHabilitacion", async (req, resp) => {
       return resp
         .status(400)
         .send(`El tipo de máquina ${req.body.tipo_maquina} no existe`);
-    var capacitacion = await Capacitacion.findOne({
+    let capacitacion = await Capacitacion.findOne({
       where: {
         MakerId: maker.id,
         TypeMachineId: type_machine.id,
@@ -193,7 +198,7 @@ router.post("/anadirMaquina", async (req, resp) => {
     });
     if (!type_machine)
       return resp.status(400).send("El tipo de máquina no existe");
-    var machine = await Machine.findOne({
+    let machine = await Machine.findOne({
       where: {
         name: req.body.nombre,
         TypeMachineId: type_machine.id,
@@ -216,17 +221,42 @@ router.post("/anadirMaquina", async (req, resp) => {
   }
 });
 
-// PUT actualizar habilitacion POR HACER
 router.put("/actualizarHabilitacion", async (req, resp) => {
   try {
+    const idHabilitacion = req.query.id;
+    const habilitacion = await Capacitacion.findOne({where: {id: idHabilitacion}});
+    habilitacion.habilitado = !habilitacion.habilitado;
+    await habilitacion.save();
+    resp.send(`Habilitación cambiada a ${habilitacion.habilitado}`);
   } catch (error) {
     resp.status(400).send(error);
   }
 });
 
-// PUT actualizar recurso
+router.put("/actualizarRecurso", async (req, resp) => {
+  try {
+    const idRecurso = req.query.id;
+    const newLink = req.query.link;
+    const recurso = await Resource.findOne({where: {id: idRecurso}});
+    recurso.link = newLink;
+    await recurso.save();
+    resp.send(`Recurso cambiado a ${recurso.link}`);
+  } catch (error) {
+    resp.status(400).send(error);
+  }
+});
 
-// DELETE eliminar maquina
+router.delete("/eliminarMaquina", async (req, resp) => {
+  try {
+    const idMachine = req.query.id;
+    const machine = await Machine.findOne({where: {id: idMachine}});
+    if (!machine) return resp.send(`No existe la máquina de id ${idMachine}`);
+    await machine.destroy();
+    resp.send("Máquina borrada exitosamente");
+  } catch (error) {
+    resp.status(400).send(error);
+  }
+})
 
 router.post("/anadirTipoMaquina", async (req, resp) => {
   try {
