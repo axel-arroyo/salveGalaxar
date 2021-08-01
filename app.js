@@ -14,7 +14,7 @@ app.listen(8080, console.log("el servidor esta corriendo en el puerto 8080"));
 var CronJob = require("cron").CronJob;
 const routines = require("./routines");
 
-var job = new CronJob("*/1 * * * *", function () {
+var job = new CronJob("*/5 * * * *", function () {
   routines.updateMachines();
 });
 job.start();

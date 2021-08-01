@@ -4,7 +4,7 @@ const axios = require("axios");
 const {
   Machine,
   Type_Machine,
-  Capacitacion,
+  Habilitation,
   Maker,
   Ayudante,
   Resource,
@@ -59,7 +59,7 @@ router.get("/listarHabilitacion", async (req, resp) => {
     const habilitaciones = await Type_Machine.findAll({
       include: [
         {
-          model: Capacitacion,
+          model: Habilitation,
           include: Maker,
         },
       ],
@@ -69,11 +69,11 @@ router.get("/listarHabilitacion", async (req, resp) => {
       // Cada elemento son los tipos de maquina con una lista de los habilitados para cada una de ellas
       const element = habilitaciones[i];
       const typeMachineName = element.name;
-      // (element -> Capacitacions -> Maker -> email) corresponde al correo del usuario habilitado.
+      // (element -> Habilitations -> Maker -> email) corresponde al correo del usuario habilitado.
       // Se obtiene el correo del maker para cada habilitación, por lo que el map obtiene todos los usuarios.
       let habilitadosdeMaquina = {};
-      for (let i = 0; i < element.Capacitacions.length; i++) {
-        const habilitacion = element.Capacitacions[i];
+      for (let i = 0; i < element.Habilitations.length; i++) {
+        const habilitacion = element.Habilitations[i];
         const id_hab = habilitacion.id;
         const maker_email = habilitacion.Maker.email;
         habilitadosdeMaquina[id_hab] = maker_email;
@@ -95,12 +95,12 @@ router.get("/buscarHabilitacion", async (req, resp) => {
       },
       include: [
         {
-          model: Capacitacion,
+          model: Habilitation,
           include: Type_Machine,
         },
       ],
     });
-    const habilitacionesMaker = habilitaciones.Capacitacions.map(
+    const habilitacionesMaker = habilitaciones.Habilitations.map(
       (hab) => hab.Type_Machine.name
     );
     resp.send(habilitacionesMaker);
@@ -113,7 +113,7 @@ router.get("/listarHabilitacionPorTipoMaquina", async (req, resp) => {
   try {
     const typeMachineName = req.query.name;
     const habilitacionesPorTipoMaquina = await axios.get(
-      "http://localhost:8080/resources/listarHabilitacion"
+      "http://localhost:8080/resources/listarHabilitation"
     );
     const habilitacionesTipoMaquina =
       habilitacionesPorTipoMaquina.data[typeMachineName];
@@ -162,27 +162,27 @@ router.post("/anadirHabilitacion", async (req, resp) => {
       return resp
         .status(400)
         .send(`El tipo de máquina ${req.body.tipo_maquina} no existe`);
-    let capacitacion = await Capacitacion.findOne({
+    let habilitacion = await Habilitation.findOne({
       where: {
         MakerId: maker.id,
         TypeMachineId: type_machine.id,
         habilitado: true,
       },
     });
-    if (capacitacion)
+    if (habilitacion)
       return resp
         .status(400)
         .send(
           `El usuario ${req.body.email_maker} ya se encuentra capacitado para esta máquina`
         );
-    capacitacion = await Capacitacion.create({
+      habilitacion = await Habilitation.create({
       TypeMachineId: type_machine.id,
       MakerId: maker.id,
       AyudanteId: ayudante.id,
       ResourceId: resource.id,
       habilitado: true,
     });
-    resp.send(capacitacion);
+    resp.send(habilitacion);
   } catch (error) {
     resp.status(400).send(error);
   }
@@ -223,8 +223,8 @@ router.post("/anadirMaquina", async (req, resp) => {
 
 router.put("/actualizarHabilitacion", async (req, resp) => {
   try {
-    const idHabilitacion = req.query.id;
-    const habilitacion = await Capacitacion.findOne({where: {id: idHabilitacion}});
+    const idHabilitation = req.query.id;
+    const habilitacion = await Habilitation.findOne({where: {id: idHabilitation}});
     habilitacion.habilitado = !habilitacion.habilitado;
     await habilitacion.save();
     resp.send(`Habilitación cambiada a ${habilitacion.habilitado}`);
@@ -256,7 +256,7 @@ router.delete("/eliminarMaquina", async (req, resp) => {
   } catch (error) {
     resp.status(400).send(error);
   }
-})
+});
 
 router.post("/anadirTipoMaquina", async (req, resp) => {
   try {

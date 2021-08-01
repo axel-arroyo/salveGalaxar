@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Maker.hasMany(models.Capacitacion, {
+      Maker.hasMany(models.Habilitation, {
         foreignKey: "MakerId",
       });
     }

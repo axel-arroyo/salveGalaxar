@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       Type_Machine.hasMany(models.Machine, {
         foreignKey: "TypeMachineId",
       });
-      Type_Machine.hasMany(models.Capacitacion, {
+      Type_Machine.hasMany(models.Habilitation, {
         foreignKey: "TypeMachineId",
       });
     }
