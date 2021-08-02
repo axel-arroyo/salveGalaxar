@@ -113,7 +113,7 @@ router.get("/listarHabilitacionPorTipoMaquina", async (req, resp) => {
   try {
     const typeMachineName = req.query.name;
     const habilitacionesPorTipoMaquina = await axios.get(
-      "http://localhost:8080/resources/listarHabilitation"
+      "http://localhost:8080/resources/listarHabilitacion"
     );
     const habilitacionesTipoMaquina =
       habilitacionesPorTipoMaquina.data[typeMachineName];
@@ -175,7 +175,7 @@ router.post("/anadirHabilitacion", async (req, resp) => {
         .send(
           `El usuario ${req.body.email_maker} ya se encuentra capacitado para esta máquina`
         );
-      habilitacion = await Habilitation.create({
+    habilitacion = await Habilitation.create({
       TypeMachineId: type_machine.id,
       MakerId: maker.id,
       AyudanteId: ayudante.id,
@@ -224,7 +224,9 @@ router.post("/anadirMaquina", async (req, resp) => {
 router.put("/actualizarHabilitacion", async (req, resp) => {
   try {
     const idHabilitation = req.query.id;
-    const habilitacion = await Habilitation.findOne({where: {id: idHabilitation}});
+    const habilitacion = await Habilitation.findOne({
+      where: { id: idHabilitation },
+    });
     habilitacion.habilitado = !habilitacion.habilitado;
     await habilitacion.save();
     resp.send(`Habilitación cambiada a ${habilitacion.habilitado}`);
@@ -237,7 +239,7 @@ router.put("/actualizarRecurso", async (req, resp) => {
   try {
     const idRecurso = req.query.id;
     const newLink = req.query.link;
-    const recurso = await Resource.findOne({where: {id: idRecurso}});
+    const recurso = await Resource.findOne({ where: { id: idRecurso } });
     recurso.link = newLink;
     await recurso.save();
     resp.send(`Recurso cambiado a ${recurso.link}`);
@@ -249,7 +251,7 @@ router.put("/actualizarRecurso", async (req, resp) => {
 router.delete("/eliminarMaquina", async (req, resp) => {
   try {
     const idMachine = req.query.id;
-    const machine = await Machine.findOne({where: {id: idMachine}});
+    const machine = await Machine.findOne({ where: { id: idMachine } });
     if (!machine) return resp.send(`No existe la máquina de id ${idMachine}`);
     await machine.destroy();
     resp.send("Máquina borrada exitosamente");
