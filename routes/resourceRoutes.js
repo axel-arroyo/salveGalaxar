@@ -252,7 +252,8 @@ router.delete("/eliminarMaquina", async (req, resp) => {
   try {
     const idMachine = req.query.id;
     const machine = await Machine.findOne({ where: { id: idMachine } });
-    if (!machine) return resp.send(`No existe la máquina de id ${idMachine}`);
+    if (!machine)
+      return resp.status(400).send(`No existe la máquina de id ${idMachine}`);
     await machine.destroy();
     resp.send("Máquina borrada exitosamente");
   } catch (error) {
