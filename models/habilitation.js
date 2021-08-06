@@ -12,12 +12,6 @@ module.exports = (sequelize, DataTypes) => {
       Habilitation.belongsTo(models.Resource, {
         foreignKey: "ResourceId",
       });
-      Habilitation.belongsTo(models.Ayudante, {
-        foreignKey: "AyudanteId",
-      });
-      Habilitation.belongsTo(models.Maker, {
-        foreignKey: "MakerId",
-      });
       Habilitation.belongsTo(models.Type_Machine, {
         foreignKey: "TypeMachineId",
       });
@@ -26,8 +20,8 @@ module.exports = (sequelize, DataTypes) => {
   Habilitation.init(
     {
       TypeMachineId: DataTypes.INTEGER,
-      MakerId: DataTypes.INTEGER,
-      AyudanteId: DataTypes.INTEGER,
+      Maker_Rut: DataTypes.INTEGER,
+      Ayudante_Rut: DataTypes.INTEGER,
       ResourceId: DataTypes.INTEGER,
       habilitado: DataTypes.BOOLEAN,
     },
