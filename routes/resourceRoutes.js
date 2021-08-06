@@ -52,7 +52,6 @@ router.get("/listarRecursos", async (req, resp) => {
   }
 });
 
-//Filtrar habilitado: true
 router.get("/listarHabilitacion", async (req, resp) => {
   try {
     const habilitaciones = await Type_Machine.findAll({
@@ -118,6 +117,7 @@ router.get("/listarHabilitacionPorTipoMaquina", async (req, resp) => {
   }
 });
 
+// Integracion 06-08
 router.post("/anadirHabilitacion", async (req, resp) => {
   try {
     let makerInfo = await axios.get("https://727378f74246.up.railway.app/student/rut", {
