@@ -175,7 +175,8 @@ router.post("/anadirHabilitacion", async (req, resp) => {
         );
       await axios.put(
         "http://localhost:8080/resources/actualizarHabilitacion",
-        `id=${habilitacion.id}`
+        null,
+        { params: { id: habilitacion.id } }
       );
       await habilitacion.reload();
       return resp.send(habilitacion);
