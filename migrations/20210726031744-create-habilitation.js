@@ -17,10 +17,10 @@ module.exports = {
         },
       },
       Maker_Rut: {
-        type: Sequelize.INTEGER
+        type: Sequelize.STRING
       },
       Ayudante_Rut: {
-        type: Sequelize.INTEGER
+        type: Sequelize.STRING
       },
       ResourceId: {
         type: Sequelize.INTEGER,

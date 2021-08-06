@@ -20,8 +20,8 @@ module.exports = (sequelize, DataTypes) => {
   Habilitation.init(
     {
       TypeMachineId: DataTypes.INTEGER,
-      Maker_Rut: DataTypes.INTEGER,
-      Ayudante_Rut: DataTypes.INTEGER,
+      Maker_Rut: DataTypes.STRING,
+      Ayudante_Rut: DataTypes.STRING,
       ResourceId: DataTypes.INTEGER,
       habilitado: DataTypes.BOOLEAN,
     },
