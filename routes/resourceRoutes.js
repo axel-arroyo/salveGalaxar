@@ -101,9 +101,9 @@ router.get("/buscarHabilitacion", async (req, resp) => {
       ],
     });
     const habilitacionesMaker = habilitaciones.Habilitations.map(
-      (hab) => hab.Type_Machine.name
+      (hab) => [hab.id, hab.Type_Machine.name]
     );
-    resp.send(habilitacionesMaker);
+    resp.send(Object.fromEntries(habilitacionesMaker));
   } catch (error) {
     resp.status(400).send(error);
   }
@@ -179,6 +179,8 @@ router.post("/anadirHabilitacion", async (req, resp) => {
         { params: { id: habilitacion.id } }
       );
       await habilitacion.reload();
+      habilitacion.ResourceId = resource.id;
+      habilitacion.save();
       return resp.send(habilitacion);
     }
     habilitacion = await Habilitation.create({
