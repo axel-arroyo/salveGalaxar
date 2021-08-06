@@ -166,15 +166,22 @@ router.post("/anadirHabilitacion", async (req, resp) => {
       where: {
         MakerId: maker.id,
         TypeMachineId: type_machine.id,
-        habilitado: true,
       },
     });
-    if (habilitacion)
-      return resp
-        .status(400)
-        .send(
+    if (habilitacion) {
+      if (habilitacion.habilitado)
+        return resp.send(
           `El usuario ${req.body.email_maker} ya se encuentra capacitado para esta máquina`
         );
+      await axios.put(
+        "http://localhost:8080/resources/actualizarHabilitacion",
+        {
+          id: habilitacion.id,
+        }
+      );
+      await habilitacion.reload();
+      return resp.send(habilitacion);
+    }
     habilitacion = await Habilitation.create({
       TypeMachineId: type_machine.id,
       MakerId: maker.id,
