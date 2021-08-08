@@ -5,8 +5,6 @@ const {
   Machine,
   Type_Machine,
   Habilitation,
-  Maker,
-  Ayudante,
   Resource,
 } = require("../models");
 const { response } = require("express");
@@ -57,12 +55,12 @@ router.get("/listarRecursos", async (req, resp) => {
 router.get("/listarHabilitacion", async (req, resp) => {
   try {
     const habilitaciones = await Type_Machine.findAll({
-      include: [
-        {
-          model: Habilitation,
-          include: Maker,
-        },
-      ],
+      include: {
+        model: Habilitation,
+        where: {
+          habilitado: true
+        }
+      }
     });
     let habilitacionesPorMaquina = {};
     for (let i = 0; i < habilitaciones.length; i++) {
@@ -75,8 +73,8 @@ router.get("/listarHabilitacion", async (req, resp) => {
       for (let i = 0; i < element.Habilitations.length; i++) {
         const habilitacion = element.Habilitations[i];
         const id_hab = habilitacion.id;
-        const maker_email = habilitacion.Maker.email;
-        habilitadosdeMaquina[id_hab] = maker_email;
+        const maker_rut = habilitacion.Maker_Rut;
+        habilitadosdeMaquina[id_hab] = maker_rut;
       }
       habilitacionesPorMaquina[typeMachineName] = habilitadosdeMaquina;
     }
@@ -88,19 +86,15 @@ router.get("/listarHabilitacion", async (req, resp) => {
 
 router.get("/buscarHabilitacion", async (req, resp) => {
   try {
-    const emailMaker = req.query.emailMaker;
-    const habilitaciones = await Maker.findOne({
+    const rutMaker = req.query.rut;
+    const habilitaciones = await Habilitation.findAll({
       where: {
-        email: emailMaker,
+        Maker_Rut: rutMaker,
+        habilitado: true
       },
-      include: [
-        {
-          model: Habilitation,
-          include: Type_Machine,
-        },
-      ],
-    });
-    const habilitacionesMaker = habilitaciones.Habilitations.map(
+      include: Type_Machine
+    })
+    const habilitacionesMaker = habilitaciones.map(
       (hab) => [hab.id, hab.Type_Machine.name]
     );
     resp.send(Object.fromEntries(habilitacionesMaker));
@@ -123,32 +117,28 @@ router.get("/listarHabilitacionPorTipoMaquina", async (req, resp) => {
   }
 });
 
+// Integracion 06-08
 router.post("/anadirHabilitacion", async (req, resp) => {
   try {
-    // Se asume que los usuarios son válidos
-    let maker = await Maker.findOne({
-      where: {
-        email: req.body.email_maker,
-      },
+    let makerInfo = await axios.get("https://727378f74246.up.railway.app/student/rut", {
+      params: {
+        rut: req.body.rut_maker
+      }
     });
-    let ayudante = await Ayudante.findOne({
-      where: {
-        email: req.body.email_ayudante,
-      },
+    let ayudanteInfo = await axios.get("https://727378f74246.up.railway.app/assistant/rut", {
+      params: {
+        rut: req.body.rut_ayudante
+      }
     });
     let resource = await Resource.findOne({
       where: {
         link: req.body.recurso,
       },
     });
-    if (!maker)
-      maker = await Maker.create({
-        email: req.body.email_maker,
-      });
-    if (!ayudante)
-      ayudante = await Ayudante.create({
-        email: req.body.email_ayudante,
-      });
+    makerInfo = makerInfo.data;
+    ayudanteInfo = ayudanteInfo.data;
+    if (makerInfo.length == 0) return resp.status(400).send(`No existe un maker de rut ${req.body.rut_maker}`)
+    if (ayudanteInfo.length == 0) return resp.status(400).send(`No existe un ayudante de rut ${req.body.rut_ayudante}`)
     if (!resource)
       resource = await Resource.create({
         link: req.body.recurso,
@@ -164,14 +154,14 @@ router.post("/anadirHabilitacion", async (req, resp) => {
         .send(`El tipo de máquina ${req.body.tipo_maquina} no existe`);
     let habilitacion = await Habilitation.findOne({
       where: {
-        MakerId: maker.id,
+        Maker_Rut: req.body.rut_maker,
         TypeMachineId: type_machine.id,
       },
     });
     if (habilitacion) {
       if (habilitacion.habilitado)
         return resp.send(
-          `El usuario ${req.body.email_maker} ya se encuentra capacitado para esta máquina`
+          `El usuario ${req.body.rut_maker} ya se encuentra capacitado para esta máquina`
         );
       await axios.put(
         "http://localhost:8080/resources/actualizarHabilitacion",
@@ -185,8 +175,8 @@ router.post("/anadirHabilitacion", async (req, resp) => {
     }
     habilitacion = await Habilitation.create({
       TypeMachineId: type_machine.id,
-      MakerId: maker.id,
-      AyudanteId: ayudante.id,
+      Maker_Rut: req.body.rut_maker,
+      Ayudante_Rut: req.body.rut_ayudante,
       ResourceId: resource.id,
       habilitado: true,
     });

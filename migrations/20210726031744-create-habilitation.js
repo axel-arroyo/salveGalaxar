@@ -16,21 +16,11 @@ module.exports = {
           as: "TypeMachineId",
         },
       },
-      MakerId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: "Makers",
-          key: "id",
-          as: "MakerId",
-        },
+      Maker_Rut: {
+        type: Sequelize.STRING
       },
-      AyudanteId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: "Ayudantes",
-          key: "id",
-          as: "AyudanteId",
-        },
+      Ayudante_Rut: {
+        type: Sequelize.STRING
       },
       ResourceId: {
         type: Sequelize.INTEGER,
