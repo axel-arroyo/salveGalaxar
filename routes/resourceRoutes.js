@@ -116,37 +116,53 @@ router.get("/listarHabilitacionPorTipoMaquina", async (req, resp) => {
 // Integracion 06-08
 router.post("/anadirHabilitacion", async (req, resp) => {
   try {
-    let makerInfo = await axios.get(
-      "https://2c32fcf08ad9.up.railway.app/student/rut",
-      {
-        params: {
-          rut: req.body.rut_maker,
-        },
-      }
-    );
+    const rut_maker = req.body.rut_maker;
+    const rut_ayudante = req.body.rut_ayudante;
+    // Un ayudante no puede habiltarse a sí mismo
+    if (rut_maker == rut_ayudante) return resp.status(400).send("Un ayudante no puede habiltarse a sí mismo");
+    // El maker es un estudiante?
+    // Maker puede ser [Estudiante, Ayudante, Externo]
+    let makerInfo = null;
+    routes_maker = ["https://2c32fcf08ad9.up.railway.app/student/rut", "https://2c32fcf08ad9.up.railway.app/assistant/rut", "https://2c32fcf08ad9.up.railway.app/external/rut"];
+    for (let i = 0; i < routes_maker.length; i++) {
+      const route = routes_maker[i];
+      const response = await axios.get(
+        route,
+        {
+          params: {
+            rut: rut_maker,
+          },
+        }
+      );
+      makerInfo = response.data;
+      if (makerInfo.length != 0) break;
+    }
+
+    if (makerInfo.length == 0)
+      return resp
+        .status(400)
+        .send(`No existe un maker de rut ${rut_maker}`);
+
     let ayudanteInfo = await axios.get(
       "https://2c32fcf08ad9.up.railway.app/assistant/rut",
       {
         params: {
-          rut: req.body.rut_ayudante,
+          rut: rut_ayudante,
         },
       }
     );
+    ayudanteInfo = ayudanteInfo.data;
+
     let resource = await Resource.findOne({
       where: {
         link: req.body.recurso,
       },
     });
-    makerInfo = makerInfo.data;
-    ayudanteInfo = ayudanteInfo.data;
-    if (makerInfo.length == 0)
-      return resp
-        .status(400)
-        .send(`No existe un maker de rut ${req.body.rut_maker}`);
+    
     if (ayudanteInfo.length == 0)
       return resp
         .status(400)
-        .send(`No existe un ayudante de rut ${req.body.rut_ayudante}`);
+        .send(`No existe un ayudante de rut ${rut_ayudante}`);
     if (!resource)
       resource = await Resource.create({
         link: req.body.recurso,
@@ -162,14 +178,14 @@ router.post("/anadirHabilitacion", async (req, resp) => {
         .send(`El tipo de máquina ${req.body.tipo_maquina} no existe`);
     let habilitacion = await Habilitation.findOne({
       where: {
-        Maker_Rut: req.body.rut_maker,
+        Maker_Rut: rut_maker,
         TypeMachineId: type_machine.id,
       },
     });
     if (habilitacion) {
       if (habilitacion.habilitado)
         return resp.send(
-          `El usuario ${req.body.rut_maker} ya se encuentra capacitado para esta máquina`
+          `El usuario ${rut_maker} ya se encuentra capacitado para esta máquina`
         );
       await axios.put(
         "http://localhost:8080/resources/actualizarHabilitacion",
@@ -179,16 +195,16 @@ router.post("/anadirHabilitacion", async (req, resp) => {
       await habilitacion.reload();
       habilitacion.ResourceId = resource.id;
       habilitacion.save();
-      return resp.send(habilitacion);
+      return resp.send(`La habilitación para ${rut_maker} ha sido actualizada por el ayudante ${rut_ayudante} para la máquina ${req.body.tipo_maquina}.`);
     }
     habilitacion = await Habilitation.create({
       TypeMachineId: type_machine.id,
-      Maker_Rut: req.body.rut_maker,
-      Ayudante_Rut: req.body.rut_ayudante,
+      Maker_Rut: rut_maker,
+      Ayudante_Rut: rut_ayudante,
       ResourceId: resource.id,
       habilitado: true,
     });
-    resp.send(habilitacion);
+    resp.send(`La habilitación para ${rut_maker} ha sido creada por el ayudante ${rut_ayudante} para la máquina ${req.body.tipo_maquina}.`);
   } catch (error) {
     resp.status(400).send(error);
   }
