@@ -1,12 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const {
-  Machine,
-  Type_Machine,
-  Habilitation,
-  Resource,
-} = require("../models");
+const { Machine, Type_Machine, Habilitation, Resource } = require("../models");
 const { response } = require("express");
 
 router.get("/listarMaquinas", async (req, resp) => {
@@ -58,9 +53,9 @@ router.get("/listarHabilitacion", async (req, resp) => {
       include: {
         model: Habilitation,
         where: {
-          habilitado: true
-        }
-      }
+          habilitado: true,
+        },
+      },
     });
     let habilitacionesPorMaquina = {};
     for (let i = 0; i < habilitaciones.length; i++) {
@@ -90,13 +85,14 @@ router.get("/buscarHabilitacion", async (req, resp) => {
     const habilitaciones = await Habilitation.findAll({
       where: {
         Maker_Rut: rutMaker,
-        habilitado: true
+        habilitado: true,
       },
-      include: Type_Machine
-    })
-    const habilitacionesMaker = habilitaciones.map(
-      (hab) => [hab.id, hab.Type_Machine.name]
-    );
+      include: Type_Machine,
+    });
+    const habilitacionesMaker = habilitaciones.map((hab) => [
+      hab.id,
+      hab.Type_Machine.name,
+    ]);
     resp.send(Object.fromEntries(habilitacionesMaker));
   } catch (error) {
     resp.status(400).send(error);
@@ -120,16 +116,22 @@ router.get("/listarHabilitacionPorTipoMaquina", async (req, resp) => {
 // Integracion 06-08
 router.post("/anadirHabilitacion", async (req, resp) => {
   try {
-    let makerInfo = await axios.get("https://727378f74246.up.railway.app/student/rut", {
-      params: {
-        rut: req.body.rut_maker
+    let makerInfo = await axios.get(
+      "https://2c32fcf08ad9.up.railway.app/student/rut",
+      {
+        params: {
+          rut: req.body.rut_maker,
+        },
       }
-    });
-    let ayudanteInfo = await axios.get("https://727378f74246.up.railway.app/assistant/rut", {
-      params: {
-        rut: req.body.rut_ayudante
+    );
+    let ayudanteInfo = await axios.get(
+      "https://2c32fcf08ad9.up.railway.app/assistant/rut",
+      {
+        params: {
+          rut: req.body.rut_ayudante,
+        },
       }
-    });
+    );
     let resource = await Resource.findOne({
       where: {
         link: req.body.recurso,
@@ -137,8 +139,14 @@ router.post("/anadirHabilitacion", async (req, resp) => {
     });
     makerInfo = makerInfo.data;
     ayudanteInfo = ayudanteInfo.data;
-    if (makerInfo.length == 0) return resp.status(400).send(`No existe un maker de rut ${req.body.rut_maker}`)
-    if (ayudanteInfo.length == 0) return resp.status(400).send(`No existe un ayudante de rut ${req.body.rut_ayudante}`)
+    if (makerInfo.length == 0)
+      return resp
+        .status(400)
+        .send(`No existe un maker de rut ${req.body.rut_maker}`);
+    if (ayudanteInfo.length == 0)
+      return resp
+        .status(400)
+        .send(`No existe un ayudante de rut ${req.body.rut_ayudante}`);
     if (!resource)
       resource = await Resource.create({
         link: req.body.recurso,
